@@ -13,6 +13,8 @@ class Maze_solver:
     canvas = Canvas(master,
            width=0,
            height=0)
+    src_node_num = -1
+    maze = [[]]
     #Draw canvas
     def draw_canvas(self):
         canvas_height = self.unit_height * int(self.num_rows)
@@ -35,22 +37,22 @@ class Maze_solver:
                     self.num_cols, self.num_rows = each_line.split(",")
 
                     #initialize maze
-                    maze = []
+                    self.maze = []
                 else:
-                    maze.append([]);
+                    self.maze.append([]);
                     #get each character
                     for each_char in each_line:
                         if (each_char != '\n'):
-                            maze[row_count-1].append(each_char)
+                            self.maze[row_count-1].append(each_char)
                     col_count = col_count + 1;
                 row_count = row_count + 1;
-        return maze
+        return self.maze
 
     #draw maze based on node_to_matrix
     def draw_maze(self,maze):
-        for i in range(0,len(maze)):
-            for j in range(0,len(maze[0])):
-                if(maze[i][j] == '#'):
+        for i in range(0,len(self.maze)):
+            for j in range(0,len(self.maze[0])):
+                if(self.maze[i][j] == '#'):
                     self.draw_square(j*self.unitwidth, i*self.unit_height, 'black')
 
     #draw square
@@ -59,16 +61,99 @@ class Maze_solver:
 
     #get coordinates of canvas from user click
     def callback(self,event):
-        print ("clicked at", event.x, event.y)
-        print ("grid location", event.x/self.unitwidth, event.y/self.unit_height)
-        grid_location_x =  event.x/self.unitwidth
-        grid_location_y = event.y/self.unit_height
-        self.draw_square(grid_location_x*self.unitwidth, grid_location_y*self.unit_height, 'green')
+        #print ("clicked at", event.x, event.y)
+        #print ("grid location", event.x/self.unitwidth, event.y/self.unit_height)
+        self.grid_location_x =  event.x/self.unitwidth
+        self.grid_location_y = event.y/self.unit_height
+        #convert the grid to node Number
+        self.src_node_num = int(self.grid_location_y)*int(self.num_cols) + int(self.grid_location_x)
+        #print ("node", self.src_node_num)
+        #find shortest path and draw it
+        self.draw_maze(self.maze)
+        curr, src, parent = self.shortest_path()
+        self.draw_short_path(curr, src, parent)
 
-    #get click from user and the location of cursor
+        #self.draw_square(self.grid_location_x*self.unitwidth, self.grid_location_y*self.unit_height, 'green')
+
+    #get click from user and the location of cursory
     def user_click(self):
         #get user click
-        self.canvas.bind("<Button-1>",maze_solve.callback)
+        self.canvas.bind("<Button-1>", self.callback)
+        return self.grid_location_x, self.grid_location_y
+
+    def node_num_to_indexes(self,node_num):
+        index_y = node_num/int(self.num_cols)
+        index_x = node_num - index_y*int(self.num_rows)
+        return index_x, index_y
+
+    #check if a node is an exit
+    def is_exit(self,index_x, index_y):
+        if (index_x == 0 or index_x == int(self.num_cols) or index_y == 0 or index_y == int(self.num_rows)):
+            return 1
+        return 0
+
+    #check node validity
+    def check_validity(self,curr_node, row_index, adj_node):
+        diff = curr_node - adj_node
+        upper_index = row_index
+        if (abs(diff) == 1 and (adj_node >= row_index * int(self.num_cols)) and (adj_node < (upper_index*int(self.num_cols)))):
+            return 1
+        elif ((abs(diff) != 1) and (adj_node < int(self.num_cols) * int(self.num_rows)) and (adj_node >= 0)):
+            return 1
+        return 0
+
+    #draw the path to exit
+    def draw_short_path(self,current_node, source_node, parent_node):
+        print (current_node)
+        while(current_node != -1):
+            print (current_node)
+            x_coord, y_coord = self.node_num_to_indexes(current_node)
+            self.draw_square(x_coord*self.unitwidth, y_coord*self.unit_height, 'green')
+            current_node = parent_node[current_node]
+
+    #find shortest path to exist
+    def shortest_path(self):
+        #to find adjacent nodes
+        adj_values = [1,-1,self.num_cols, -int(self.num_cols)]
+        #queue for BFS
+        queue = []
+        #set parent node also put visited to 0 (to signify not visited)
+        visited = []
+        parent_node = []
+        for i in range(int(self.num_cols)*int(self.num_rows)):
+            visited.append(0)
+            parent_node.append(-1)
+        #add source node to queue
+        queue.append(self.src_node_num)
+        #set it to visited
+        visited[self.src_node_num] = 1
+
+        #until quue gets empty
+        while(len(queue) > 0):
+            curr_node = queue[0] #get the first element in the queue
+            #remove element from queue
+            queue.remove(curr_node)
+            index_x_curr, index_curr_y = self.node_num_to_indexes(curr_node)
+            #if exit is reached, stop
+            if (self.is_exit(index_x_curr, index_curr_y)):
+                return curr_node, self.src_node_num, parent_node
+
+            #get adjacent nodes
+            for i in range(len(adj_values)):
+                adj_node = curr_node + int(adj_values[i])
+                #check validity of nodes
+                if(self.check_validity(curr_node, index_curr_y,adj_node )):
+                    index_adj_x, index_adj_y = self.node_num_to_indexes(adj_node)
+                    #if not is not visited before and is not an obstacle
+                    if(visited[adj_node] == 0 and self.maze[index_adj_x][index_adj_y] != '#'):
+                        visited[adj_node] = 1
+                        parent_node[adj_node] = curr_node
+                        #add the node to queue
+                        queue.append(adj_node)
+        print "here"
+        return -1, -1, [-1] # if no path exits
+
+
 
 #class constructor
 maze_solve = Maze_solver()
@@ -82,7 +167,6 @@ maze_solve.draw_canvas()
 #draw maze on canvas
 maze_solve.draw_maze(maze)
 maze_solve.user_click()
-
 
 #maze_solve.draw_square(maze_solve.grid_location_x*maze_solve.unitwidth, maze_solve.grid_location_y*maze_solve.unit_height, 'green')
 
