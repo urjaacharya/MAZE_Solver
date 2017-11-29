@@ -54,6 +54,8 @@ class Maze_solver:
             for j in range(0,len(self.maze[0])):
                 if(self.maze[i][j] == '#'):
                     self.draw_square(j*self.unitwidth, i*self.unit_height, 'black')
+                else:
+                    self.draw_square(j*self.unitwidth, i*self.unit_height, 'white')
 
     #draw square
     def draw_square(self, x_coord, y_coord, tag):
@@ -65,13 +67,19 @@ class Maze_solver:
         #print ("grid location", event.x/self.unitwidth, event.y/self.unit_height)
         self.grid_location_x =  event.x/self.unitwidth
         self.grid_location_y = event.y/self.unit_height
-        #convert the grid to node Number
-        self.src_node_num = int(self.grid_location_y)*int(self.num_cols) + int(self.grid_location_x)
-        #print ("node", self.src_node_num)
-        #find shortest path and draw it
-        self.draw_maze(self.maze)
-        curr, src, parent = self.shortest_path()
-        self.draw_short_path(curr, src, parent)
+        #only find shortest path if the clicked cell is white
+        if(maze[self.grid_location_y][self.grid_location_x] == '#'):
+            self.draw_maze(self.maze)
+            print ('It is an obstacle, click on the hallway (i.e white area)')
+
+        else:
+            #convert the grid to node Number
+            self.src_node_num = int(self.grid_location_y)*int(self.num_cols) + int(self.grid_location_x)
+            print ("node", self.src_node_num)
+            #find shortest path and draw it
+            self.draw_maze(self.maze)
+            curr, parent = self.shortest_path()
+            self.draw_short_path(curr, parent)
 
         #self.draw_square(self.grid_location_x*self.unitwidth, self.grid_location_y*self.unit_height, 'green')
 
@@ -88,14 +96,14 @@ class Maze_solver:
 
     #check if a node is an exit
     def is_exit(self,index_x, index_y):
-        if (index_x == 0 or index_x == int(self.num_cols) or index_y == 0 or index_y == int(self.num_rows)):
+        if (index_x == 0 or index_x == int(self.num_cols)-1 or index_y == 0 or index_y == int(self.num_rows)-1):
             return 1
         return 0
 
     #check node validity
-    def check_validity(self,curr_node, row_index, adj_node):
+    def check_validity(self, curr_node, row_index, adj_node):
         diff = curr_node - adj_node
-        upper_index = row_index
+        upper_index = row_index+1
         if (abs(diff) == 1 and (adj_node >= row_index * int(self.num_cols)) and (adj_node < (upper_index*int(self.num_cols)))):
             return 1
         elif ((abs(diff) != 1) and (adj_node < int(self.num_cols) * int(self.num_rows)) and (adj_node >= 0)):
@@ -103,8 +111,9 @@ class Maze_solver:
         return 0
 
     #draw the path to exit
-    def draw_short_path(self,current_node, source_node, parent_node):
+    def draw_short_path(self,current_node, parent_node):
         print (current_node)
+        print(maze[1][2])
         while(current_node != -1):
             print (current_node)
             x_coord, y_coord = self.node_num_to_indexes(current_node)
@@ -131,27 +140,31 @@ class Maze_solver:
         #until quue gets empty
         while(len(queue) > 0):
             curr_node = queue[0] #get the first element in the queue
+            #print ("curr", curr_node)
             #remove element from queue
             queue.remove(curr_node)
-            index_x_curr, index_curr_y = self.node_num_to_indexes(curr_node)
+            index_curr_x, index_curr_y = self.node_num_to_indexes(curr_node)
+            print("x,y", index_curr_x, index_curr_y)
             #if exit is reached, stop
-            if (self.is_exit(index_x_curr, index_curr_y)):
-                return curr_node, self.src_node_num, parent_node
+            if (self.is_exit(index_curr_x, index_curr_y)):
+                return curr_node, parent_node
 
             #get adjacent nodes
             for i in range(len(adj_values)):
                 adj_node = curr_node + int(adj_values[i])
+                print (adj_node, "adj")
                 #check validity of nodes
-                if(self.check_validity(curr_node, index_curr_y,adj_node )):
+                if(self.check_validity(curr_node,index_curr_y,adj_node)):
+                    #print(adj_node,",")
                     index_adj_x, index_adj_y = self.node_num_to_indexes(adj_node)
                     #if not is not visited before and is not an obstacle
-                    if(visited[adj_node] == 0 and self.maze[index_adj_x][index_adj_y] != '#'):
+                    if(visited[adj_node] == 0 and self.maze[index_adj_y][index_adj_x] != '#'):
                         visited[adj_node] = 1
                         parent_node[adj_node] = curr_node
                         #add the node to queue
                         queue.append(adj_node)
-        print "here"
-        return -1, -1, [-1] # if no path exits
+        #print "here"
+        return -1, [-1] # if no path exits
 
 
 
