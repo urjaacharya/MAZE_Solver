@@ -29,7 +29,7 @@ class Maze_solver:
         row_count = 0
         col_count = 0
 
-        with open('maze.txt', 'r') as maze_file:
+        with open('try_mze.txt', 'r') as maze_file:
             lines = maze_file.readlines()
             #get number of rows and columns
             for each_line in lines: #get each line
@@ -50,8 +50,8 @@ class Maze_solver:
 
     #draw maze based on node_to_matrix
     def draw_maze(self,maze):
-        for i in range(0,len(self.maze)):
-            for j in range(0,len(self.maze[0])):
+        for i in range(0,int(self.num_rows)):
+            for j in range(0, int(self.num_cols)):
                 if(self.maze[i][j] == '#'):
                     self.draw_square(j*self.unitwidth, i*self.unit_height, 'black')
                 else:
@@ -63,8 +63,6 @@ class Maze_solver:
 
     #get coordinates of canvas from user click
     def callback(self,event):
-        #print ("clicked at", event.x, event.y)
-        #print ("grid location", event.x/self.unitwidth, event.y/self.unit_height)
         self.grid_location_x =  event.x/self.unitwidth
         self.grid_location_y = event.y/self.unit_height
         #only find shortest path if the clicked cell is white
@@ -113,7 +111,6 @@ class Maze_solver:
     #draw the path to exit
     def draw_short_path(self,current_node, parent_node):
         print (current_node)
-        print(maze[1][2])
         while(current_node != -1):
             print (current_node)
             x_coord, y_coord = self.node_num_to_indexes(current_node)
