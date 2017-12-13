@@ -25,11 +25,11 @@ class Maze_solver:
         self.canvas.pack(expand=YES, fill=BOTH)
 
     #read the maze file and store it in a 2D matrix
-    def read_file(self):
+    def read_file(self, file_name):
         row_count = 0
         col_count = 0
 
-        with open('try_mze.txt', 'r') as maze_file:
+        with open(file_name, 'r') as maze_file:
             lines = maze_file.readlines()
             #get number of rows and columns
             for each_line in lines: #get each line
@@ -160,16 +160,14 @@ class Maze_solver:
                         parent_node[adj_node] = curr_node
                         #add the node to queue
                         queue.append(adj_node)
-        #print "here"
         return -1, [-1] # if no path exits
-
-
 
 #class constructor
 maze_solve = Maze_solver()
 
+name_file = raw_input("Enter the filename: ")
 #get the matrix of maze
-maze = maze_solve.read_file()
+maze = maze_solve.read_file(name_file)
 
 #draw canvas
 maze_solve.draw_canvas()
